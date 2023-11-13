@@ -3,54 +3,88 @@ from ast import Num
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import pygame
 
-SEG_WIDTH = 100
-LENGTH = 100
-FULL_WIDTH = 100
+SEG_WIDTH = 500
+LENGTH = 500
+FULL_WIDTH = 500
 N_SEGMENTS = int(FULL_WIDTH / SEG_WIDTH)
-CONFIG = [[0,0], [0,1], [28,37], [28,39], [38,37]]
+CONFIG = [[0,0], [0,1], [28,37], [28,38], [38,37], [28,39], [0,2]]
+CELL_SIZE = 10
 
-def display(segments, fig):
-    # mask = np.zeros((FULL_WIDTH, LENGTH))
-    # Simplified for one segment. Update this to iterate over segments
-    mask = segments[0].matrix
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+def create_config(type):
+    # Initialize an empty grid
+    grid_size = FULL_WIDTH
+    config = np.zeros((grid_size, grid_size), dtype=int)
+
+    if type == 1:
+            # Add a glider
+            config[2:5, 1] = 1
+            config[1, 3] = 1
+            config[2:4, 4] = 1
+
+            # Add a pulsar
+            pulsar = np.array([
+            [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
+            [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
+            ])
+
+            config[15:26, 15:26] = pulsar
+    elif type == 2:
+            heart = np.array([
+            [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            ])
+
+            config[15:26, 15:26] = heart
+    return config
+
+
+def display(surface, segments):
+    #mask = segments[0].matrix
 
     # here we iterate over each segment to fill in the mask
     for segment in segments:
         startpos = SEG_WIDTH * segment.position
 
-    ys, xs = np.where(mask.astype(bool))
-    sc = plt.scatter(xs[::2], ys[::2])
+    surface.fill(BLACK)
+    print(np.sum(segments[0].matrix))
+    for y in range(LENGTH):
+        for x in range(FULL_WIDTH):
 
-    def update(mask):
-        # Update the mask for the next iteration (you need to implement this part)
-        # You should update the mask for each segment in your actual implementation
-        # For now, I'm just using the original mask for demonstration purposes.
-        new_mask = mask  # Replace this with the logic to update the mask
+            color = WHITE if segments[0].matrix[y, x] != 0 else BLACK
+            pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
-        # Update the scatter plot data
-        ys, xs = np.where(new_mask.astype(bool))
-        sc.set_offsets(np.column_stack((xs[::2], ys[::2])))
-
-        return sc,
-
-    ani = FuncAnimation(fig, update, frames=range(10), interval=200, blit=True)
-    plt.show()
-
-def initialize(segments, start_config):
-    if np.sum(start_config) == 0:
-        return
-    for pixel in start_config:
-        # Simplified for one segment. Update this to find which segment each pixel belongs to
-        segments[0].matrix[pixel[0]][pixel[1]] = 1
-
-        # segment.matrix = start_config[:][:]
 
 # Overall matrix is divided into vertical segments
 class segment():
     def __init__(self, position):
         self.position = position
         self.matrix = np.zeros((FULL_WIDTH, LENGTH))
+
+    def setMatrix(self, matrix):
+        self.matrix = matrix
 
     # Updating the matrices; change this
     def calculate_segment(self):
@@ -69,9 +103,11 @@ class segment():
                 if self.matrix[i][j] == 1:
                     if sum >= 2 and sum <= 3:
                         temp[i][j] = 1
+
                 else:
                     if sum == 3:
                         temp[i][j] = 1
+
         self.matrix = temp
                     
 
@@ -81,23 +117,54 @@ class segment():
 
 
 if __name__ == "__main__":
-    fig, _ = plt.subplots()
-    #start_config = np.zeros((FULL_WIDTH, LENGTH))
-    # add alterations to the start config
+
     start_config = CONFIG
-    segments = [segment(i) for i in range(N_SEGMENTS)]
-    num_iterations = 10
-    initialize(segments, start_config)
-    for i in range(num_iterations):
-        display(segments, fig)
+    # start_config = np.zeros((FULL_WIDTH, LENGTH))
+    # add alterations to the start config
+    pygame.init()
+    screen = pygame.display.set_mode((FULL_WIDTH, LENGTH))
+    pygame.display.set_caption("Conway's Game of Life")
+
+    clock = pygame.time.Clock()
+    #grid = []
+    #grid.append(segment(0))
+    #grid[0].setMatrix(create_config)
+    segments = [segment(x) for x in range(N_SEGMENTS)]
+    num_iterations = 20
+    segments[0].setMatrix(create_config(2))
+    running = True
+    i = 0
+    while running:
+        i += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+
+        display(screen, segments)
+        #for i in range(num_iterations):
+        print("iteration")
+
         new_segments = segments.copy()
         for j in range(len(new_segments)):
-            if j == 0: left = len(new_segments) - 1
-            else: left = j - 1
-            if j == len(new_segments) - 1: right = 0
-            else: right = j + 1
-            new_segments[j].calculate_segment()
-            new_segments[j].calculate_edges(segments[left],segments[right])
+                if j == 0:
+                    left = len(new_segments) - 1
+                else:
+                    left = j - 1
+                if j == len(new_segments) - 1:
+                    right = 0
+                else:
+                    right = j + 1
+                new_segments[j].calculate_segment()
+                new_segments[j].calculate_edges(segments[left], segments[right])
+        # Change this to account for multiple segments later on
+        if i == num_iterations:
+            running = False
+        segments = new_segments
+        pygame.display.flip()
+        clock.tick(1)
+
+    pygame.quit()
 
             
 
