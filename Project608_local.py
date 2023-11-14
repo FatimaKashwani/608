@@ -14,6 +14,7 @@ CELL_SIZE = 10
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+GREEN = (255, 0, 0)
 
 def create_config(type):
     # Initialize an empty grid
@@ -69,11 +70,12 @@ def display(surface, segments):
         startpos = SEG_WIDTH * segment.position
 
     surface.fill(BLACK)
-    print(np.sum(segments[0].matrix))
     for y in range(LENGTH):
         for x in range(FULL_WIDTH):
 
-            color = WHITE if segments[0].matrix[y, x] != 0 else BLACK
+            color = WHITE if segments[0].matrix[y, x] == 1 else BLACK
+            if segments[0].matrix[y, x] == 2: color = GREEN
+
             pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
 
@@ -113,7 +115,12 @@ class segment():
 
                 
     def calculate_edges(self, left, right):
-        pass
+        for i in range (SEG_WIDTH):
+            self.matrix[i][0] = 2
+            self.matrix[i][LENGTH - 1] = 2
+        for i in range (LENGTH):
+            self.matrix[0][i] = 2
+            self.matrix[0][SEG_WIDTH - 1] = 2
 
 
 if __name__ == "__main__":
@@ -143,7 +150,7 @@ if __name__ == "__main__":
 
         display(screen, segments)
         #for i in range(num_iterations):
-        print("iteration")
+        #print("iteration")
 
         new_segments = segments.copy()
         for j in range(len(new_segments)):
