@@ -5,16 +5,16 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import pygame
 
-SEG_WIDTH = 500
+SEG_WIDTH = 50
 LENGTH = 500
 FULL_WIDTH = 500
 N_SEGMENTS = int(FULL_WIDTH / SEG_WIDTH)
 CONFIG = [[0,0], [0,1], [28,37], [28,38], [38,37], [28,39], [0,2]]
-CELL_SIZE = 10
+CELL_SIZE = 1
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-GREEN = (255, 0, 0)
+EDGES = (255, 0, 255)
 
 def create_config(type):
     # Initialize an empty grid
@@ -41,8 +41,14 @@ def create_config(type):
             [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
             [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
             ])
-
+            pulsar = np.rot90(pulsar)
             config[15:26, 15:26] = pulsar
+            glider = np.array([
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 1, 1]
+            ])
+            config[45:48, 30:33] = glider
     elif type == 2:
             heart = np.array([
             [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0],
@@ -57,26 +63,48 @@ def create_config(type):
             [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
             ])
-
+            heart = np.rot90(heart)
             config[15:26, 15:26] = heart
+            config[35:46, 35:46] = heart
+            config[15:26, 55:66] = heart
+            config[35:46, 75:86] = heart
+            config[15:26, 95:106] = heart
+            config[35:46, 115:126] = heart
+            config[15:26, 135:146] = heart
+            config[35:46, 155:166] = heart
+            config[15:26, 175:186] = heart
+            config[35:46, 195:206] = heart
+            config[15:26, 215:226] = heart
+            config[35:46, 235:246] = heart
+            config[35:46, 255:266] = heart
+            config[15:26, 275:286] = heart
+            config[35:46, 295:306] = heart
+            config[35:46, 315:326] = heart
+            config[15:26, 335:346] = heart
+            config[35:46, 355:366] = heart
+            config[15:26, 375:386] = heart
+            config[35:46, 395:406] = heart
+            config[15:26, 415:426] = heart
+            config[35:46, 435:446] = heart
+            config[35:46, 455:466] = heart
+            config[15:26, 475:486] = heart
+            
+            
     return config
 
 
 def display(surface, segments):
-    #mask = segments[0].matrix
-
-    # here we iterate over each segment to fill in the mask
-    for segment in segments:
-        startpos = SEG_WIDTH * segment.position
-
     surface.fill(BLACK)
-    for y in range(LENGTH):
-        for x in range(FULL_WIDTH):
+    for segment in segments:
+        for y in range(LENGTH):
+            for x in range(SEG_WIDTH):
+                #print(f"y: {y}, x: {x}, x % FULL_WIDTH: {x % FULL_WIDTH}, matrix shape: {segment.matrix.shape}")
 
-            color = WHITE if segments[0].matrix[y, x] == 1 else BLACK
-            if segments[0].matrix[y, x] == 2: color = GREEN
+                color = WHITE if segment.matrix[ x % FULL_WIDTH][y] == 1 else BLACK
+                if segment.matrix[x % FULL_WIDTH][y] == 2:
+                    color = EDGES
+                pygame.draw.rect(surface, color, ((x + segment.startpos) * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
-            pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
 
 # Overall matrix is divided into vertical segments
@@ -84,13 +112,14 @@ class segment():
     def __init__(self, position):
         self.position = position
         self.matrix = np.zeros((FULL_WIDTH, LENGTH))
+        self.startpos = SEG_WIDTH * self.position
 
     def setMatrix(self, matrix):
         self.matrix = matrix
 
-    # Updating the matrices; change this
+
     def calculate_segment(self):
-        temp = np.zeros((FULL_WIDTH, LENGTH))
+        temp = np.zeros((SEG_WIDTH, LENGTH))
         # Internal cells only; skipping the first and last rows & cols
         for i in range(1, SEG_WIDTH - 2):
             for j in range(1, LENGTH - 2):
@@ -120,7 +149,7 @@ class segment():
             self.matrix[i][LENGTH - 1] = 2
         for i in range (LENGTH):
             self.matrix[0][i] = 2
-            self.matrix[0][SEG_WIDTH - 1] = 2
+            self.matrix[SEG_WIDTH - 1][i] = 2
 
 
 if __name__ == "__main__":
@@ -138,7 +167,9 @@ if __name__ == "__main__":
     #grid[0].setMatrix(create_config)
     segments = [segment(x) for x in range(N_SEGMENTS)]
     num_iterations = 20
-    segments[0].setMatrix(create_config(2))
+    for x in range(len(segments)):
+            segments[x].setMatrix(create_config(2))
+    segments[8].setMatrix(create_config(1))
     running = True
     i = 0
     while running:
@@ -164,9 +195,9 @@ if __name__ == "__main__":
                     right = j + 1
                 new_segments[j].calculate_segment()
                 new_segments[j].calculate_edges(segments[left], segments[right])
-        # Change this to account for multiple segments later on
         if i == num_iterations:
             running = False
+
         segments = new_segments
         pygame.display.flip()
         clock.tick(1)
