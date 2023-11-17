@@ -88,6 +88,26 @@ def create_config(type):
             config[35:46, 435:446] = heart
             config[35:46, 455:466] = heart
             config[15:26, 475:486] = heart
+    elif type == 3:
+        heart = np.array([
+            [0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            ])
+        config2 = np.zeros((grid_size, grid_size), dtype=int)
+        left_half = heart[5:, :]
+        right_half = heart[:5, :]
+        config[230:236, 15:26] = heart[:6, :]
+        config2[0:6, 15:26] = heart[5:, :]
+        return config, config2
             
             
     return config
@@ -138,19 +158,74 @@ class segment():
                 else:
                     if sum == 3:
                         temp[i][j] = 1
-
+        prev = self.matrix
         self.matrix = temp
-                    
+        return prev 
 
                 
-    def calculate_edges(self, left, right):
+    def calculate_edges(prev, self, left, right):
+        prev = prev.matrix
+        # the segment to my left
+        left_border = [row[-1] for row in left.matrix]
+        # my left border
+        my_left = prev[:,0]
+        # the segment to my right
+        right_border = [row[0] for row in right.matrix]
+        # my right border
+        my_right = prev[:,-1]
+
+        # going through my left border
+        for i in range (LENGTH):
+             # Establish whether each neighbour is alive or dead
+                neighbours = []
+                neighbours += [prev[i,1], left_border[i]]
+                if i != 0:
+                    neighbours += [left_border[i-1], prev[i-1, 0], prev[i-1, 1]]
+                if i != LENGTH - 1:
+                    neighbours += [left_border[i+1], prev[i+1, 0], prev[i+1, 1]]
+                sum = np.sum(neighbours)
+
+                # Main game of life code (am I dead or alive?)
+                if prev[i][0] == 1:
+                    if sum >= 2 and sum <= 3:
+                        my_left[i] = 1
+
+                else:
+                    if sum == 3:
+                        my_left[i] = 1
+
+
+        # going through my right border
+        for i in range (LENGTH):
+             # Establish whether each neighbour is alive or dead
+                neighbours = []
+                neighbours += [prev[i,LENGTH - 2], right_border[i]]
+                if i != 0:
+                    neighbours += [right_border[i-1], prev[i-1, LENGTH - 1], prev[i-1, LENGTH - 2]]
+                if i != LENGTH - 1:
+                    neighbours += [right_border[i+1], prev[i+1, LENGTH - 1], prev[i+1, LENGTH - 2]]
+                sum = sum(neighbours)
+
+                # Main game of life code (am I dead or alive?)
+                if prev[i][0] == 1:
+                    if sum >= 2 and sum <= 3:
+                        my_right[i] = 1
+
+                else:
+                    if sum == 3:
+                        my_right[i] = 1
+
+        self.matrix[:, 0] = my_left
+        self.matrix[:, -1] = my_right
+
+        '''
         for i in range (SEG_WIDTH):
             self.matrix[i][0] = 2
             self.matrix[i][LENGTH - 1] = 2
         for i in range (LENGTH):
             self.matrix[0][i] = 2
             self.matrix[SEG_WIDTH - 1][i] = 2
-
+        '''
 
 if __name__ == "__main__":
 
@@ -167,9 +242,12 @@ if __name__ == "__main__":
     #grid[0].setMatrix(create_config)
     segments = [segment(x) for x in range(N_SEGMENTS)]
     num_iterations = 20
-    for x in range(len(segments)):
-            segments[x].setMatrix(create_config(2))
-    segments[8].setMatrix(create_config(1))
+    #for x in range(len(segments)):
+            #segments[x].setMatrix(create_config(2))
+    #segments[8].setMatrix(create_config(1))
+    left, right = create_config(3)
+    segments[0].setMatrix(left)
+    segments[1].setMatrix(right)
     running = True
     i = 0
     while running:
@@ -193,8 +271,9 @@ if __name__ == "__main__":
                     right = 0
                 else:
                     right = j + 1
-                new_segments[j].calculate_segment()
-                new_segments[j].calculate_edges(segments[left], segments[right])
+                prev = new_segments[j].calculate_segment()
+                new_segments[j].calculate_edges(prev, segments[left], segments[right])
+                print("here?")
         if i == num_iterations:
             running = False
 
