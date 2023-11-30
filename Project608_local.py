@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import pygame
+import torch
 
 SEG_WIDTH = 50
 LENGTH = 500
@@ -106,10 +107,43 @@ def create_config(type):
         left_half = heart[5:, :]
         right_half = heart[:6, :]
         config[0:6, 15:26] = left_half
-        config2[43:49, 15:26] = right_half
+        config2[44:50, 15:26] = right_half
+
+        config[26:32, 85:96] = left_half
+        config[20:26, 85:96] = right_half
+        config2[48:49, 39:49] = np.transpose(np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]]))
+        glider = [
+            [0, 0, 1, 1, 1, 1],
+            [0, 1, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1],
+            [0, 1, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+            ]
+        glider2 = [[0, 0, 0, 0, 0, 0],
+                [0, 1, 0, 1, 0, 0],
+                [1, 0, 0, 0, 0, 0],
+                [1, 0, 0, 0, 0, 0],
+                [1, 0, 0, 1, 0, 0],
+                [1, 1, 1, 0, 0, 0]]
+        glider_h = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+        #config2[33:39, 215:221] = glider
+        config2[33:39, 215:225] = glider2
+
         return config, config2
+    
+
+
+
     elif type == 4:
-        glider = glider = [
+        glider = [
             [0, 0, 1, 0, 0, 0],
             [1, 0, 1, 0, 0, 0],
             [0, 1, 1, 0, 0, 0],
@@ -117,9 +151,29 @@ def create_config(type):
             [0, 0, 0, 0, 0, 1],
             [0, 0, 0, 1, 1, 1]
             ]
-        config[43:49, 15:21] = glider
+        glider2 = [[0, 0, 0, 0, 0, 0],
+                [0, 1, 0, 1, 0, 0],
+                [1, 0, 0, 0, 0, 0],
+                [1, 0, 0, 0, 0, 0],
+                [1, 0, 0, 1, 0, 0],
+                [1, 1, 1, 0, 0, 0]]
+        config[33:39, 15:21] = glider2
             
-            
+    elif type == 5:
+        glider_gun = [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        ]
+        #config[100:143, 30:39] = np.rot90(glider_gun)
+        config[30:39, 100:143] = glider_gun
+
     return config
 
 
@@ -131,8 +185,8 @@ def display(surface, segments):
                 #print(f"y: {y}, x: {x}, x % FULL_WIDTH: {x % FULL_WIDTH}, matrix shape: {segment.matrix.shape}")
 
                 color = WHITE if segment.matrix[ x % FULL_WIDTH][y] == 1 else BLACK
-                if segment.matrix[x % FULL_WIDTH][y] == 2:
-                    color = EDGES
+                #if segment.matrix[x % FULL_WIDTH][y] == 1 and (x == SEG_WIDTH - 1 or x == 0):
+                    #color = EDGES
                 pygame.draw.rect(surface, color, ((x + segment.startpos) * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
 
@@ -199,11 +253,11 @@ class segment():
                 # Main game of life code (am I dead or alive?)
                 if prev[i][0] == 1:
                     if sum >= 2 and sum <= 3:
-                        my_left[i] = 2
+                        my_left[i] = 1
 
                 else:
                     if sum == 3:
-                        my_left[i] = 2
+                        my_left[i] = 1
 
 
         # going through my right border
@@ -220,11 +274,11 @@ class segment():
                 # Main game of life code (am I dead or alive?)
                 if prev[i][0] == 1:
                     if sum >= 2 and sum <= 3:
-                        my_right[i] = 2
+                        my_right[i] = 1
 
                 else:
                     if sum == 3:
-                        my_right[i] = 2
+                        my_right[i] = 1
 
         self.matrix[0, :] = my_left
         self.matrix[-1, :] = my_right
@@ -239,7 +293,7 @@ class segment():
         '''
 
 if __name__ == "__main__":
-
+    if torch.cuda.is_available(): torch.cuda.set_device(0)
     start_config = CONFIG
     # start_config = np.zeros((FULL_WIDTH, LENGTH))
     # add alterations to the start config
@@ -252,17 +306,19 @@ if __name__ == "__main__":
     #grid.append(segment(0))
     #grid[0].setMatrix(create_config)
     segments = [segment(x) for x in range(N_SEGMENTS)]
-    num_iterations = 20
-    #for x in range(len(segments)):
-            #segments[x].setMatrix(create_config(2))
+    num_iterations = 1000
+    for x in range(len(segments)):
+            segments[x].setMatrix(create_config(4))
     #segments[8].setMatrix(create_config(1))
-    left, right = create_config(3)
-    segments[1].setMatrix(left)
-    segments[0].setMatrix(right)
-    segments[3].setMatrix(create_config(4))
+    #left, right = create_config(3)
+    #segments[1].setMatrix(left)
+    #segments[0].setMatrix(right)
+    #segments[3].setMatrix(create_config(4))
+    #segments[4].setMatrix(create_config(5))
     running = True
     i = 0
     while running:
+        if i%100 == 0: print (i)
         i += 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -275,6 +331,7 @@ if __name__ == "__main__":
 
         new_segments = segments.copy()
         for j in range(len(new_segments)):
+
                 if j == 0:
                     left = len(new_segments) - 1
                 else:
@@ -283,17 +340,17 @@ if __name__ == "__main__":
                     right = 0
                 else:
                     right = j + 1
-                prev = new_segments[j].calculate_segment()
+                new_segments[j].calculate_segment()
                 #for seg in segments:
                     #print (seg.matrix.shape)
 
-                new_segments[j].calculate_edges(prev, segments[left], segments[right])
+                new_segments[j].calculate_edges(segments[j].matrix, segments[left], segments[right])
         if i == num_iterations:
             running = False
 
         segments = new_segments
         pygame.display.flip()
-        clock.tick(1)
+        clock.tick(10)
 
     pygame.quit()
 
