@@ -11,7 +11,7 @@ LENGTH = 500
 FULL_WIDTH = 500
 N_SEGMENTS = int(FULL_WIDTH / SEG_WIDTH)
 CONFIG = [[0,0], [0,1], [28,37], [28,38], [38,37], [28,39], [0,2]]
-CELL_SIZE = 2
+CELL_SIZE = 1
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -19,8 +19,8 @@ EDGES = (255, 0, 255)
 
 def create_config(type):
     # Initialize an empty grid
-    grid_size = FULL_WIDTH
-    config = np.zeros((grid_size, grid_size), dtype=int)
+    #grid_size = FULL_WIDTH
+    config = np.zeros((SEG_WIDTH, LENGTH), dtype=int)
 
     if type == 1:
             # Add a glider
@@ -135,7 +135,7 @@ def create_config(type):
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ]
         #config2[33:39, 215:221] = glider
-        config2[33:39, 215:225] = glider2
+        config2[43:49, 215:225] = glider2
 
         return config, config2
     
@@ -157,7 +157,14 @@ def create_config(type):
                 [1, 0, 0, 0, 0, 0],
                 [1, 0, 0, 1, 0, 0],
                 [1, 1, 1, 0, 0, 0]]
-        config[33:39, 15:21] = glider2
+        
+        glider3 = [[0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 1],
+                    [0, 0, 0, 0, 1, 0],
+                    [0, 0, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 0]]
+        config[3:9, 490:496] = np.rot90(glider2)
             
     elif type == 5:
         glider_gun = [
@@ -186,6 +193,7 @@ def display(surface, segments):
 
                 color = WHITE if segment.matrix[ x % FULL_WIDTH][y] == 1 else BLACK
                 #if segment.matrix[x % FULL_WIDTH][y] == 1 and (x == SEG_WIDTH - 1 or x == 0):
+                #if x == 0 or x == SEG_WIDTH - 1 or y == 0 or y == LENGTH - 1:
                     #color = EDGES
                 pygame.draw.rect(surface, color, ((x + segment.startpos) * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
@@ -205,11 +213,16 @@ class segment():
     def calculate_segment(self):
         temp = np.zeros((SEG_WIDTH, LENGTH))
         # Internal cells only; skipping the first and last rows & cols
-        for i in range(1, SEG_WIDTH - 2):
-            for j in range(1, LENGTH - 2):
+        for i in range(1, SEG_WIDTH - 1):
+            for j in range(LENGTH):
 
                 # Establish whether each neighbour is alive or dead
-                neighbours = [[i-1,j-1], [i-1,j], [i-1, j+1], [i,j-1], [i,j+1], [i+1, j-1], [i+1, j], [i+1, j+1]]
+                if j == 0:
+                    neighbours = [[i-1,LENGTH - 1], [i-1,j], [i-1, j+1], [i,LENGTH - 1], [i,j+1], [i+1, LENGTH - 1], [i+1, j], [i+1, j+1]]
+                elif j == LENGTH - 1:
+                    neighbours = [[i-1, j-1], [i-1,j], [i-1, 0], [i, j-1], [i,0], [i+1, j-1], [i+1, j], [i+1, 0]]
+                else:
+                    neighbours = [[i-1,j-1], [i-1,j], [i-1, j+1], [i,j-1], [i,j+1], [i+1, j-1], [i+1, j], [i+1, j+1]]
                 sum = 0
                 for n in range(len(neighbours)):
                     sum += self.matrix[neighbours[n][0]][neighbours[n][1]]
@@ -222,66 +235,109 @@ class segment():
                 else:
                     if sum == 3:
                         temp[i][j] = 1
-        prev = self.matrix
         self.matrix = temp
-        return prev 
+
 
                 
     def calculate_edges(self, prev, left, right):
         # the segment to my left
-        prev = prev.transpose()
+        #prev = prev.transpose()
         #print(prev.shape)
-        left_border = [row for row in left.matrix[-1]]
+        left_border = left[-1, :]
 
         # my left border
-        my_left = prev[:,0]
+        #my_left = prev[0,:]
+        my_left = np.zeros((LENGTH))
         # the segment to my right
-        right_border = [row for row in right.matrix[0]]
+        right_border = right[0, :]
         # my right border
-        my_right = prev[:,-1]
+        #my_right = prev[SEG_WIDTH -1,:]
+        my_right = np.zeros((LENGTH))
         # going through my left border
-        for i in range (LENGTH - 2):
+        for i in range (LENGTH):
              # Establish whether each neighbour is alive or dead
+                '''
                 neighbours = []
-                neighbours += [prev[i,1], left_border[i]]
+                neighbours += [prev[1, i], left_border[i]]
                 if i != 0:
-                    neighbours += [left_border[i-1], prev[i-1, 0], prev[i-1, 1]]
+                    neighbours += [left_border[i-1], prev[0, i-1], prev[1, i-1]]
                 if i != LENGTH - 1:
-                    neighbours += [left_border[i+1], prev[i+1, 0], prev[i+1, 1]]
+                    neighbours += [left_border[i+1], prev[0, i+1], prev[1, i+1]]
                 sum = np.sum(neighbours)
-
+                '''
+                sum = 0
+                sum += prev[1, i]
+                sum += left_border[i]
+                if i != 0:
+                    sum += left_border[i-1]
+                    sum += prev[0, i-1]
+                    sum += prev[1, i-1]
+                else:
+                    sum += left_border[LENGTH-1]
+                    sum += prev[0, LENGTH-1]
+                    sum += prev[1, LENGTH-1]
+                if i != (LENGTH - 1):
+                    sum += left_border[i+1]
+                    sum += prev[0, i+1]
+                    sum += prev[1, i+1]
+                else:
+                    sum += left_border[0]
+                    sum += prev[0, 0]
+                    sum += prev[1, 0]
                 # Main game of life code (am I dead or alive?)
-                if prev[i][0] == 1:
+                if prev[0, i] == 1:
                     if sum >= 2 and sum <= 3:
                         my_left[i] = 1
+                    else:
+                        my_left[i] = 0
 
                 else:
                     if sum == 3:
                         my_left[i] = 1
+                    else:
+                        my_left[i] = 0
 
 
         # going through my right border
+
         for i in range (LENGTH):
              # Establish whether each neighbour is alive or dead
-                neighbours = []
-                neighbours += [prev[i,SEG_WIDTH - 2], right_border[i]]
+                sum = 0
+                sum += prev[SEG_WIDTH - 2, i]
+                sum += right_border[i]
                 if i != 0:
-                    neighbours += [right_border[i-1], prev[i-1, SEG_WIDTH - 1], prev[i-1, SEG_WIDTH - 2]]
+                    sum += right_border[i-1]
+                    sum += prev[SEG_WIDTH - 1, i-1]
+                    sum += prev[SEG_WIDTH - 2, i-1]
+                else:
+                    sum += right_border[LENGTH-1]
+                    sum += prev[SEG_WIDTH - 1, LENGTH-1]
+                    sum += prev[SEG_WIDTH - 2, LENGTH-1]
                 if i != LENGTH - 1:
-                    neighbours += [right_border[i+1], prev[i+1, SEG_WIDTH - 1], prev[i+1, SEG_WIDTH - 2]]
-                sum = np.sum(neighbours)
+                    sum += right_border[i+1]
+                    sum += prev[SEG_WIDTH - 1, i+1]
+                    sum += prev[SEG_WIDTH - 2, i+1]
+                else:
+                    sum += right_border[0]
+                    sum += prev[SEG_WIDTH - 1, 0]
+                    sum += prev[SEG_WIDTH - 2, 0]
 
                 # Main game of life code (am I dead or alive?)
-                if prev[i][0] == 1:
+                if prev[SEG_WIDTH - 1, i] == 1:
                     if sum >= 2 and sum <= 3:
                         my_right[i] = 1
+                    else:
+                        my_right[i] = 0
 
                 else:
                     if sum == 3:
                         my_right[i] = 1
-
-        self.matrix[0, :] = my_left
-        self.matrix[-1, :] = my_right
+                    else:
+                        my_right[i] = 0
+        #if np.sum(my_right) != 0:
+            #print(np.sum(my_right))
+        self.matrix[0] = my_left
+        self.matrix[-1] = my_right
 
         '''
         for i in range (SEG_WIDTH):
@@ -291,6 +347,7 @@ class segment():
             self.matrix[0][i] = 2
             self.matrix[SEG_WIDTH - 1][i] = 2
         '''
+    
 
 if __name__ == "__main__":
     if torch.cuda.is_available(): torch.cuda.set_device(0)
@@ -306,9 +363,12 @@ if __name__ == "__main__":
     #grid.append(segment(0))
     #grid[0].setMatrix(create_config)
     segments = [segment(x) for x in range(N_SEGMENTS)]
+    #for seg in segments:
+        #print (seg.matrix.shape)
     num_iterations = 1000
     for x in range(len(segments)):
-            segments[x].setMatrix(create_config(4))
+            #if x%2 == 0:
+                segments[x].setMatrix(create_config(4))
     #segments[8].setMatrix(create_config(1))
     #left, right = create_config(3)
     #segments[1].setMatrix(left)
@@ -328,7 +388,7 @@ if __name__ == "__main__":
         display(screen, segments)
         #for i in range(num_iterations):
         #print("iteration")
-
+        previouses = [s.matrix for s in segments]
         new_segments = segments.copy()
         for j in range(len(new_segments)):
 
@@ -340,11 +400,11 @@ if __name__ == "__main__":
                     right = 0
                 else:
                     right = j + 1
-                new_segments[j].calculate_segment()
-                #for seg in segments:
-                    #print (seg.matrix.shape)
 
-                new_segments[j].calculate_edges(segments[j].matrix, segments[left], segments[right])
+                new_segments[j].calculate_segment()
+
+                
+                new_segments[j].calculate_edges(previouses[j], previouses[left], previouses[right])
         if i == num_iterations:
             running = False
 
