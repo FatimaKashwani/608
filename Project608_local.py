@@ -11,7 +11,7 @@ LENGTH = 500
 FULL_WIDTH = 500
 N_SEGMENTS = int(FULL_WIDTH / SEG_WIDTH)
 CONFIG = [[0,0], [0,1], [28,37], [28,38], [38,37], [28,39], [0,2]]
-CELL_SIZE = 1
+CELL_SIZE = 5
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -164,7 +164,7 @@ def create_config(type):
                     [0, 0, 0, 0, 1, 0],
                     [0, 0, 1, 1, 1, 0],
                     [0, 0, 0, 0, 0, 0]]
-        config[3:9, 490:496] = np.rot90(glider2)
+        config[3:9, 13:19] = np.rot90(np.rot90(glider2))
             
     elif type == 5:
         glider_gun = [
